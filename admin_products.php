@@ -17,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     
     if (isset($_POST['add_product'])) {
-        // تم إضافة الحقل الجديد هنا في المصفوفة
         $stmt = $pdo->prepare("INSERT INTO products (name, category_id, price, stock_quantity, image_url, description) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $_POST['name'], 
@@ -25,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_POST['price'], 
             $_POST['stock'], 
             $_POST['image_url'], 
-            $_POST['description'] // جلب القيمة من النموذج الجديد
+            $_POST['description']
         ]);
         $message = "Product added successfully!";
     }
@@ -39,36 +38,53 @@ $products = $pdo->query("SELECT p.*, c.name as category_name FROM products p LEF
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link href="css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Jessbella</title>
     <style>
-        body { font-family: 'Lato', sans-serif; background: #f9f7f2; color: #333; margin: 0; display: flex; }
-        h1, h2, h3 { font-family: 'Playfair Display', serif; color: #4a0404; }
-        .sidebar { width: 250px; background: #4a0404; color: #fff; height: 100vh; padding: 20px; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Lato', sans-serif; background: #f9f7f2; color: #333; margin: 0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 250px; background: #4a0404; color: #fff; padding: 20px; flex-shrink: 0; }
         .sidebar a { display: block; color: #fff; padding: 15px; text-decoration: none; border-bottom: 1px solid #6d0606; }
         .sidebar a:hover { background: #6d0606; }
-        .main-content { flex: 1; padding: 30px; }
-        .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-x: hidden; }
+        .form-wrapper { display: flex; gap: 20px; flex-wrap: wrap; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; flex: 1; min-width: 300px; }
+        
+        /* Table Responsive */
+        .table-container { width: 100%; overflow-x: auto; background: #fff; border-radius: 12px; }
+        table { width: 100%; min-width: 600px; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #4a0404; color: #fff; }
+        
         .btn-save { background: #4a0404; color: #fff; border: none; padding: 10px 20px; cursor: pointer; width: 100%; border-radius: 5px; font-weight: bold; }
         .btn-save:hover { background: #6d0606; }
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+        /* Media Queries for Mobile */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; }
+            .form-wrapper { flex-direction: column; }
+            .main-content { padding: 15px; }
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>Jessbella Admin</h2>
+        <a href="admin_dashboard.php">Dashboard</a>
         <a href="admin_products.php">Manage Products</a>
         <a href="logout.php">Logout</a>
     </div>
+    
     <div class="main-content">
         <h1>Catalog & Inventory Control</h1>
         <?php if($message): ?><div class="alert"><?= $message ?></div><?php endif; ?>
         
-        <div style="display: flex; gap: 20px;">
-            <div class="card" style="width: 40%;">
+        <div class="form-wrapper">
+            <div class="card">
                 <h3>Create New Category</h3>
                 <form method="POST">
                     <input type="text" name="category_name" placeholder="Category Name" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
@@ -77,7 +93,7 @@ $products = $pdo->query("SELECT p.*, c.name as category_name FROM products p LEF
                 </form>
             </div>
             
-            <div class="card" style="width: 60%;">
+            <div class="card">
                 <h3>Add Premium Product</h3>
                 <form method="POST">
                     <input type="text" name="name" placeholder="Product Title" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
@@ -88,7 +104,7 @@ $products = $pdo->query("SELECT p.*, c.name as category_name FROM products p LEF
                     </select>
                     <input type="number" name="price" placeholder="Price ($)" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
                     <input type="number" name="stock" value="1" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
-                    <textarea name="description" placeholder="Product Description"  style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                    <textarea name="description" placeholder="Product Description" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;"></textarea>
                     <input type="text" name="image_url" placeholder="Image URL (e.g., images/bag1.jpg)" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
                     <button type="submit" name="add_product" class="btn-save">Deploy Product</button>
                 </form>
@@ -97,17 +113,19 @@ $products = $pdo->query("SELECT p.*, c.name as category_name FROM products p LEF
 
         <div class="card">
             <h3>Active Collections Catalog</h3>
-            <table>
-                <tr><th>Title</th><th>Category</th><th>Price</th><th>Stock</th></tr>
-                <?php foreach($products as $p): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($p['name']) ?></td>
-                        <td><?= htmlspecialchars($p['category_name']) ?></td>
-                        <td>$<?= number_format($p['price'], 2) ?></td>
-                        <td><?= $p['stock_quantity'] ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
+            <div class="table-container">
+                <table>
+                    <tr><th>Title</th><th>Category</th><th>Price</th><th>Stock</th></tr>
+                    <?php foreach($products as $p): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($p['name']) ?></td>
+                            <td><?= htmlspecialchars($p['category_name']) ?></td>
+                            <td>$<?= number_format($p['price'], 2) ?></td>
+                            <td><?= $p['stock_quantity'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            </div>
         </div>
     </div>
 </body>
